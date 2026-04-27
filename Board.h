@@ -10,6 +10,7 @@
 
 class Board {
 private:
+    //width i heght są wymiarami logicznymi, stride jest szerokością fizyczną (uwzględnia ghost cells)
     int width;
     int height;
     int stride;
@@ -17,25 +18,26 @@ private:
 
 public:
     Board(int w, int h);
+    //getter dla komórki logicznej
     inline uint8_t getCell(int x, int y) const
     {
         int physX = x + 1;
         int physY = y + 1;
         return grid[physY * stride + physX];
     }
-
+    //setter dla komórki logicznej
     inline void setCell(int x, int y, uint8_t state)
     {
         int physX = x + 1;
         int physY = y + 1;
         grid[physY * stride + physX] = state;
     }
-
+    //getter dla komórki fizycznej
     inline uint8_t getRawCell(int x, int y) const
     {
         return grid[y * stride + x];
     }
-
+    //setter dla komórki fizycznej
     inline void setRawCell(int x, int y, uint8_t state)
     {
         grid[y * stride + x] = state;

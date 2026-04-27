@@ -9,7 +9,7 @@ GameOfLife::GameOfLife(int width, int height, int cellSize):width(width),height(
     this->currentBoard = std::make_unique<Board>(width, height);
     this->nextBoard = std::make_unique<Board>(width, height);
 }
-
+//Dzięki ghostCells nie mam tu ifów, więc mogę zawsze porównywać ze wszystkim naokoło
 uint8_t GameOfLife::countAliveNeighbors(int x, int y) {
     return currentBoard->getCell(x + 1, y) + currentBoard->getCell(x + 1, y + 1)
             + currentBoard->getCell(x - 1, y) + currentBoard->getCell(x - 1, y -1)
@@ -52,7 +52,7 @@ void GameOfLife::drawGeneration() {
     }
 }
 
-
+//wygenerowany przez Gemini latawiec do testów
 void GameOfLife::spawnGlider()
 {
     int cx = this->width / 2;
@@ -65,6 +65,10 @@ void GameOfLife::spawnGlider()
     this->currentBoard->setCell(cx + 1, cy + 1, 1);
 }
 
+
+
+//funkcja kopiująca krawędzie do ghostcelli - np. kopiuje logicznie ostatni wiersz do fizycznie pierwszego(ghost)
+//dzięki temu jest "zawijanie" planszy
 void GameOfLife::synchronizeGhostCells()
 {
     for(int x = 1; x <= this->width; x++)
