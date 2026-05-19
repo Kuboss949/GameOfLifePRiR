@@ -42,6 +42,10 @@ public:
     {
         grid[y * stride + x] = state;
     }
+    inline uint8_t* getRowPointer(int y) {
+        return grid.data() + y * stride;
+    }
+
     uint8_t* data();
 };
 
