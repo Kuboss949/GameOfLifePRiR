@@ -1,88 +1,47 @@
-
-/* WERSJA SEKWENCYJNA */
-/*
-#include <iostream>
-#include "raylib.h"
-#include "GameOfLife.h"
-
-int main() {
-    InitWindow(1500, 1000, "Gra w Zycie");
-    SetTargetFPS(15);
-
-    std::unique_ptr<GameOfLife> game = std::make_unique<GameOfLife>(150, 100, 10);
-    game->spawnGlider();
-    while(!WindowShouldClose()){
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        game->drawGeneration();
-        EndDrawing();
-        game->computeNextGeneration();
-    }
-
-
-    return 0;
-}
-*/
-
-
-/* WERSJA OPEN MPI */
 #include <iostream>
 #include <vector>
-#include <mpi.h>
 #include "raylib.h"
-#include "GameOfLifeMPI.h"
+#include "GameOfLifeCUDA.h"
 
-int main(int argc, char** argv) {
-    MPI_Init(&argc, &argv);
+int main()
+{
+    const int width = 150;
+    const int height = 100;
+    const int cellSize = 10;
 
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    std::vector<uint8_t> hostBoard(width * height, 0);
 
-    int global_width = 150;
-    int global_height = 100;
-    int cell_size = 10;
+    // glider
+    int cx = width / 2;
+    int cy = height / 2;
+    hostBoard[(cy-1)*width + cx] = 1;
+    hostBoard[(cy)*width + cx+1] = 1;
+    hostBoard[(cy+1)*width + cx-1] = 1;
+    hostBoard[(cy+1)*width + cx] = 1;
+    hostBoard[(cy+1)*width + cx+1] = 1;
 
-    std::unique_ptr<GameOfLifeMPI> game = std::make_unique<GameOfLifeMPI>(global_width, global_height, cell_size, rank, size);
+    InitWindow(width * cellSize, height * cellSize, "Game of Life CUDA");
+    SetTargetFPS(15);
 
-    // Spawn odpalamy na wszystkich, ale lambda w środku sprawdza do kogo należy ten kawałek
-    game->spawnGlider();
+    while (!WindowShouldClose())
+    {
+        // ✅ tylko jedno wywołanie
+        runGameOfLifeStep(hostBoard.data(), width, height);
 
-    if (rank == 0) {
-        InitWindow(global_width * cell_size, global_height * cell_size, "Gra w Zycie - MPI");
-        SetTargetFPS(15);
-    }
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
 
-    int keepRunning = 1;
-    std::vector<uint8_t> fullBoardBuffer;
-
-    while (true) {
-        if (rank == 0) {
-            keepRunning = !WindowShouldClose();
+        for(int y = 0; y < height; y++){
+            for(int x = 0; x < width; x++){
+                if(hostBoard[y * width + x]){
+                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, BLACK);
+                }
+            }
         }
 
-        MPI_Bcast(&keepRunning, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-        if (!keepRunning) break;
-
-        // Każdy proces wysyła swój fragment, proces 0 zbiera go w fullBoardBuffer
-        game->gatherBoardToMaster(fullBoardBuffer);
-
-        if (rank == 0) {
-            BeginDrawing();
-            ClearBackground(RAYWHITE);
-            game->drawGeneration(fullBoardBuffer);
-            EndDrawing();
-        }
-
-        // Wszystkie procesy synchronicznie liczą kolejną generację
-        game->computeNextGeneration();
+        EndDrawing();
     }
 
-    if (rank == 0) {
-        CloseWindow();
-    }
-
-    MPI_Finalize();
+    CloseWindow();
     return 0;
 }

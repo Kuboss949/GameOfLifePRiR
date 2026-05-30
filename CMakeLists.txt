@@ -1,15 +1,27 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.26)
+
 project(GameOfLifeCUDA LANGUAGES CXX CUDA)
 
-set(CMAKE_CUDA_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CUDA_STANDARD 17)
 
-# raylib
-set(RAYLIB_PATH "D:/libs/raylib")
-include_directories(${RAYLIB_PATH}/include)
-link_directories(${RAYLIB_PATH}/lib)
+set(CMAKE_CUDA_HOST_COMPILER "D:/Visual studio/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe")
 
-add_executable(app main.cu)
+find_package(raylib REQUIRED)
 
-set_target_properties(app PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+add_executable(GameOfLifeCUDA
+    main.cpp
+    GameOfLifeCUDA.cu
+    GameOfLifeCUDA.h
+)
 
-target_link_libraries(app raylib opengl32 gdi32 winmm)
+set_target_properties(GameOfLifeCUDA PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_ARCHITECTURES 75 86 89
+)
+
+target_link_libraries(GameOfLifeCUDA PRIVATE raylib)
+
+if(UNIX)
+    target_link_libraries(GameOfLifeCUDA PRIVATE m pthread dl)
+endif()
